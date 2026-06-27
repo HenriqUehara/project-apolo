@@ -10,20 +10,4 @@
 [[redirects]]
   from = "/api/migrate"
   to = "/.netlify/functions/migrate"
-
-
-
-cat > netlify.toml << 'EOF'
-[build]
-  publish = "public"
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/api/interactions"
-  to = "/.netlify/functions/interactions"
-  status = 200
-
-[[redirects]]
-  from = "/api/migrate"
-  to = "/.netlify/functions/migrate"
   status = 200
