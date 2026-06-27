@@ -3,86 +3,276 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Migração de Interações · Pipeline</title>
+  <title>Pipeline Sync · DGF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0f1115;
-      --card: #1a1d24;
-      --border: #2a2e38;
-      --text: #e6e8ec;
-      --muted: #9aa0aa;
-      --accent: #3b82f6;
-      --green: #22c55e;
-      --amber: #f59e0b;
-      --red: #ef4444;
+      --ink:        #0e1a14;
+      --forest:     #1B3D2F;
+      --green:      #2E8B57;
+      --green-br:   #3CAB6E;
+      --mist:       #c8e6c9;
+      --paper:      #f6f8f5;
+      --card:       #ffffff;
+      --line:       #e2e8e2;
+      --muted:      #5d6b62;
+      --amber:      #b7791f;
+      --red:        #c0392b;
+      --shadow:     0 1px 2px rgba(14,26,20,.04), 0 8px 30px rgba(14,26,20,.06);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg); color: var(--text); line-height: 1.5;
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.5;
     }
-    .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px; }
-    h1 { font-size: 1.5rem; margin: 0 0 4px; }
-    .sub { color: var(--muted); margin: 0 0 28px; font-size: .9rem; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
-    input[type=password] {
-      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
-      background: #0f1115; color: var(--text); font-size: .95rem;
+
+    /* ── Tela de acesso ─────────────────────────────────────── */
+    .gate {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(60,171,110,.10), transparent 60%),
+        var(--paper);
     }
-    button {
-      background: var(--accent); color: #fff; border: 0; border-radius: 8px;
-      padding: 9px 16px; font-size: .9rem; cursor: pointer; font-weight: 500;
+    .gate-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 40px 36px 32px;
+      position: relative;
+      overflow: hidden;
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    button.mini { padding: 6px 12px; font-size: .82rem; }
-    .row { display: flex; gap: 10px; align-items: center; }
+    .gate-card::before {
+      content: "";
+      position: absolute; inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--forest), var(--green-br), var(--mist));
+    }
+    .mark {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 28px;
+    }
+    .mark .glyph {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: var(--forest);
+      display: grid; place-items: center;
+      color: var(--green-br);
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500; font-size: 18px;
+      flex: none;
+    }
+    .mark .wordmark { font-family: "JetBrains Mono", monospace; font-size: .82rem; letter-spacing: .04em; color: var(--muted); }
+    .mark .wordmark b { color: var(--ink); font-weight: 500; }
+
+    .gate h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 500;
+      font-size: 1.85rem;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+    .gate .lede { color: var(--muted); font-size: .92rem; margin-bottom: 28px; }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: .76rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 7px;
+    }
+    .field input {
+      width: 100%; padding: 12px 14px;
+      border: 1px solid var(--line); border-radius: 11px;
+      background: var(--paper);
+      font-family: "JetBrains Mono", monospace; font-size: .95rem;
+      color: var(--ink); transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .field input:focus {
+      outline: none; border-color: var(--green);
+      background: var(--card);
+      box-shadow: 0 0 0 4px rgba(46,139,87,.12);
+    }
+
+    .btn {
+      width: 100%; border: none; cursor: pointer;
+      padding: 12px 16px; border-radius: 11px;
+      font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 600;
+      background: var(--forest); color: #fff;
+      transition: transform .08s ease, background .15s;
+    }
+    .btn:hover { background: #16332742; background: #163327; }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .gate .note {
+      margin-top: 22px; padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-size: .78rem; color: var(--muted);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .gate .note svg { flex: none; margin-top: 1px; }
+
+    .alert {
+      margin-top: 14px; padding: 10px 13px;
+      border-radius: 10px; font-size: .85rem;
+      background: #fdecea; color: var(--red);
+      border: 1px solid #f5c6c0;
+    }
+    .hidden { display: none !important; }
+
+    /* ── App ────────────────────────────────────────────────── */
+    .app { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; margin-bottom: 6px;
+    }
+    .topbar h2 {
+      font-family: "Fraunces", Georgia, serif; font-weight: 500;
+      font-size: 1.5rem; letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 11px;
+    }
+    .topbar h2 .glyph {
+      width: 30px; height: 30px; border-radius: 8px; background: var(--forest);
+      display: grid; place-items: center; color: var(--green-br);
+      font-family: "JetBrains Mono", monospace; font-size: 16px; flex: none;
+    }
+    .flow {
+      font-family: "JetBrains Mono", monospace; font-size: .78rem; color: var(--muted);
+      margin-bottom: 24px; padding-left: 41px;
+    }
+    .flow b { color: var(--green); font-weight: 500; }
+
+    .controls {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .count { font-size: .85rem; color: var(--muted); }
+    .count b { color: var(--ink); font-weight: 600; }
+    .control-group { display: flex; align-items: center; gap: 8px; }
+    .sortbtn, .reload {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border-radius: 9px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card);
+      font-family: "Inter", sans-serif; font-size: .82rem; font-weight: 500; color: var(--ink);
+      transition: border-color .15s, background .15s;
+    }
+    .sortbtn:hover, .reload:hover { border-color: var(--green); background: #f0f7f2; }
+    .sortbtn svg { transition: transform .2s ease; }
+    .sortbtn.desc svg { transform: scaleY(-1); }
+
+    .search {
+      width: 100%; margin-bottom: 18px;
+      padding: 11px 14px; border: 1px solid var(--line); border-radius: 11px;
+      background: var(--card); font-size: .9rem; color: var(--ink);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 4px rgba(46,139,87,.10); }
+
+    .list { display: flex; flex-direction: column; gap: 8px; }
     .item {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 14px 16px; background: var(--card);
+      border: 1px solid var(--line); border-radius: 12px;
+      transition: border-color .15s, box-shadow .15s;
     }
+    .item:hover { border-color: var(--mist); box-shadow: var(--shadow); }
     .item .title { font-size: .92rem; word-break: break-word; }
-    .status { font-size: .78rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-    .s-idle { color: var(--muted); border: 1px solid var(--border); }
-    .s-loading { color: var(--accent); border: 1px solid var(--accent); }
-    .s-migrated { color: var(--green); border: 1px solid var(--green); }
-    .s-skipped { color: var(--amber); border: 1px solid var(--amber); }
-    .s-error { color: var(--red); border: 1px solid var(--red); }
-    .hidden { display: none; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .count { color: var(--muted); font-size: .85rem; }
-    .err { color: var(--red); font-size: .85rem; margin-top: 8px; }
-    a { color: var(--accent); }
+    .item-right { display: flex; align-items: center; gap: 12px; flex: none; }
+
+    .status { font-family: "JetBrains Mono", monospace; font-size: .73rem; white-space: nowrap; }
+    .s-idle { color: var(--muted); }
+    .s-loading { color: var(--green); }
+    .s-migrated { color: var(--green); }
+    .s-skipped { color: var(--amber); }
+    .s-error { color: var(--red); }
+
+    .mig {
+      border: 1px solid var(--forest); background: var(--forest); color: #fff;
+      padding: 7px 15px; border-radius: 9px; cursor: pointer;
+      font-family: "Inter", sans-serif; font-size: .82rem; font-weight: 600;
+      transition: background .15s, transform .08s;
+    }
+    .mig:hover { background: #163327; }
+    .mig:active { transform: translateY(1px); }
+    .mig:disabled { opacity: .5; cursor: not-allowed; }
+    .item a { color: var(--green); font-size: .76rem; font-family: "JetBrains Mono", monospace; text-decoration: none; }
+    .item a:hover { text-decoration: underline; }
+
+    .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: .9rem; }
+
+    @media (max-width: 480px) {
+      .gate-card { padding: 32px 24px 26px; }
+      .item { flex-direction: column; align-items: stretch; }
+      .item-right { justify-content: space-between; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Migração de Interações · Pipeline</h1>
-    <p class="sub">Notion pessoal → Notion DGF · migração ad hoc (título + conteúdo)</p>
 
-    <!-- Login -->
-    <div class="card" id="loginCard">
-      <label for="pwd">Senha de acesso</label>
-      <div class="row">
-        <input type="password" id="pwd" placeholder="••••••••" />
-        <button id="loginBtn">Entrar</button>
+  <!-- ══ Tela de acesso ══ -->
+  <div class="gate" id="gate">
+    <div class="gate-card">
+      <div class="mark">
+        <div class="glyph">⊳</div>
+        <div class="wordmark"><b>PIPELINE SYNC</b> · DGF</div>
       </div>
-      <div class="err hidden" id="loginErr"></div>
+      <h1>Migração de interações</h1>
+      <p class="lede">Leva registros do pipeline do Notion pessoal para o workspace do DGF, um a um.</p>
+
+      <div class="field">
+        <label for="pwd">Senha de acesso</label>
+        <input type="password" id="pwd" placeholder="••••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn" id="loginBtn">Entrar</button>
+      <div class="alert hidden" id="loginErr"></div>
+
+      <div class="note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Acesso restrito. As credenciais do Notion ficam no servidor — nunca passam pelo navegador.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ App ══ -->
+  <div class="app hidden" id="app">
+    <div class="topbar">
+      <h2><span class="glyph">⊳</span> Interações</h2>
+      <button class="reload" id="reloadBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        Recarregar
+      </button>
+    </div>
+    <p class="flow">notion pessoal <b>→</b> notion dgf · título + conteúdo</p>
+
+    <input class="search" id="search" type="text" placeholder="Filtrar por título…" />
+
+    <div class="controls">
+      <span class="count" id="count"></span>
+      <div class="control-group">
+        <button class="sortbtn" id="sortBtn" title="Alternar ordem alfabética">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5h10"/><path d="M11 9h7"/><path d="M11 13h4"/><path d="M3 17l3 3 3-3"/><path d="M6 18V4"/></svg>
+          <span id="sortLabel">A → Z</span>
+        </button>
+      </div>
     </div>
 
-    <!-- App -->
-    <div id="appArea" class="hidden">
-      <div class="toolbar">
-        <span class="count" id="count"></span>
-        <button class="ghost mini" id="reloadBtn">Recarregar lista</button>
-      </div>
-      <div id="list"></div>
-    </div>
+    <div class="list" id="list"></div>
   </div>
 
   <script>
     let password = "";
+    let allItems = [];
+    let sortAsc = true;
 
     const $ = (id) => document.getElementById(id);
 
@@ -106,8 +296,8 @@
       $("loginBtn").disabled = true;
       try {
         await loadList();
-        $("loginCard").classList.add("hidden");
-        $("appArea").classList.remove("hidden");
+        $("gate").classList.add("hidden");
+        $("app").classList.remove("hidden");
       } catch (err) {
         $("loginErr").textContent = err.message;
         $("loginErr").classList.remove("hidden");
@@ -118,17 +308,34 @@
 
     async function loadList() {
       const { items } = await api("/api/interactions");
-      $("count").textContent = `${items.length} interação(ões) na origem`;
+      allItems = items;
+      render();
+    }
+
+    function render() {
+      const term = $("search").value.trim().toLowerCase();
+      let items = allItems.filter((it) => it.title.toLowerCase().includes(term));
+      items.sort((a, b) => {
+        const cmp = a.title.localeCompare(b.title, "pt-BR");
+        return sortAsc ? cmp : -cmp;
+      });
+
+      $("count").innerHTML = `<b>${items.length}</b> de ${allItems.length} interação(ões)`;
+
       const list = $("list");
       list.innerHTML = "";
+      if (items.length === 0) {
+        list.innerHTML = `<div class="empty">Nenhuma interação corresponde ao filtro.</div>`;
+        return;
+      }
       for (const it of items) {
         const el = document.createElement("div");
         el.className = "item";
         el.innerHTML = `
           <span class="title">${escapeHtml(it.title)}</span>
-          <span class="row">
+          <span class="item-right">
             <span class="status s-idle" data-status>aguardando</span>
-            <button class="mini" data-migrate>Migrar</button>
+            <button class="mig" data-migrate>Migrar</button>
           </span>`;
         const statusEl = el.querySelector("[data-status]");
         const btn = el.querySelector("[data-migrate]");
@@ -146,16 +353,17 @@
           body: JSON.stringify({ pageId }),
         });
         if (r.status === "migrated") {
-          const extra = r.skippedBlocks ? ` (${r.skippedBlocks} bloco(s) não suportado(s))` : "";
-          setStatus(statusEl, "migrated", `migrado · ${r.blocks} bloco(s)${extra}`);
+          const extra = r.skippedBlocks ? ` · ${r.skippedBlocks} bloco(s) não suportado(s)` : "";
+          setStatus(statusEl, "migrated", `✓ ${r.blocks} bloco(s)${extra}`);
           if (r.url) {
             const a = document.createElement("a");
-            a.href = r.url; a.target = "_blank"; a.textContent = "abrir";
-            a.style.marginLeft = "8px"; a.style.fontSize = ".8rem";
-            statusEl.after(a);
+            a.href = r.url; a.target = "_blank"; a.textContent = "abrir ↗";
+            statusEl.before(a);
           }
+          btn.remove();
         } else if (r.status === "skipped") {
           setStatus(statusEl, "skipped", "já existe · pulado");
+          btn.remove();
         } else {
           setStatus(statusEl, "error", r.message || "erro");
           btn.disabled = false;
@@ -171,6 +379,13 @@
       el.textContent = text;
     }
 
+    function toggleSort() {
+      sortAsc = !sortAsc;
+      $("sortBtn").classList.toggle("desc", !sortAsc);
+      $("sortLabel").textContent = sortAsc ? "A → Z" : "Z → A";
+      render();
+    }
+
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -180,6 +395,8 @@
     $("loginBtn").addEventListener("click", login);
     $("pwd").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
     $("reloadBtn").addEventListener("click", () => loadList().catch((e) => alert(e.message)));
+    $("sortBtn").addEventListener("click", toggleSort);
+    $("search").addEventListener("input", render);
   </script>
 </body>
 </html>

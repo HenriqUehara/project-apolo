@@ -6,6 +6,8 @@ const dgf = new Client({ auth: process.env.NOTION_DGF_TOKEN });
 const PERSONAL_DB = process.env.PERSONAL_DATABASE_ID;
 const DGF_DB = process.env.DGF_DATABASE_ID;
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
 async function getTitlePropName(client, databaseId) {
   const db = await client.databases.retrieve({ database_id: databaseId });
   for (const [name, prop] of Object.entries(db.properties)) {
@@ -80,7 +82,7 @@ function stripNulls(value) {
   if (value && typeof value === "object") {
     const out = {};
     for (const [k, v] of Object.entries(value)) {
-      if (v === null) continue; // descarta a chave inteira
+      if (v === null) continue;
       out[k] = stripNulls(v);
     }
     return out;
@@ -95,7 +97,6 @@ function sanitizeBlock(block) {
   let payload = block[type] ? structuredClone(block[type]) : {};
   delete payload.children;
 
-  // Limpa quaisquer campos null que a API de escrita não aceita
   payload = stripNulls(payload);
 
   if (block.__children?.length) {
@@ -105,6 +106,19 @@ function sanitizeBlock(block) {
 
   return { object: "block", type, [type]: payload };
 }
+
+// A API limita ~100 blocos por chamada de append
+async function appendBlocks(client, pageId, blocks) {
+  const CHUNK = 90;
+  for (let i = 0; i < blocks.length; i += CHUNK) {
+    await client.blocks.children.append({
+      block_id: pageId,
+      children: blocks.slice(i, i + CHUNK),
+    });
+  }
+}
+
+// ── API pública do módulo ──────────────────────────────────────────────────
 
 export async function listSourceInteractions() {
   const titleProp = await getTitlePropName(personal, PERSONAL_DB);
