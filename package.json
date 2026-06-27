@@ -1,0 +1,16 @@
+{
+  "name": "notion-migra-pipeline",
+  "version": "1.0.0",
+  "description": "Migração ad hoc de interações de pipeline do Notion pessoal para o Notion do DGF",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Migração de Interações · Pipeline</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #1a1d24;
+      --border: #2a2e38;
+      --text: #e6e8ec;
+      --muted: #9aa0aa;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 28px; font-size: .9rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+    input[type=password] {
+      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: #0f1115; color: var(--text); font-size: .95rem;
+    }
+    button {
+      background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+      padding: 9px 16px; font-size: .9rem; cursor: pointer; font-weight: 500;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.mini { padding: 6px 12px; font-size: .82rem; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .item {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;
+    }
+    .item .title { font-size: .92rem; word-break: break-word; }
+    .status { font-size: .78rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+    .s-idle { color: var(--muted); border: 1px solid var(--border); }
+    .s-loading { color: var(--accent); border: 1px solid var(--accent); }
+    .s-migrated { color: var(--green); border: 1px solid var(--green); }
+    .s-skipped { color: var(--amber); border: 1px solid var(--amber); }
+    .s-error { color: var(--red); border: 1px solid var(--red); }
+    .hidden { display: none; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .count { color: var(--muted); font-size: .85rem; }
+    .err { color: var(--red); font-size: .85rem; margin-top: 8px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Migração de Interações · Pipeline</h1>
+    <p class="sub">Notion pessoal → Notion DGF · migração ad hoc (título + conteúdo)</p>
+
+    <!-- Login -->
+    <div class="card" id="loginCard">
+      <label for="pwd">Senha de acesso</label>
+      <div class="row">
+        <input type="password" id="pwd" placeholder="••••••••" />
+        <button id="loginBtn">Entrar</button>
+      </div>
+      <div class="err hidden" id="loginErr"></div>
+    </div>
+
+    <!-- App -->
+    <div id="appArea" class="hidden">
+      <div class="toolbar">
+        <span class="count" id="count"></span>
+        <button class="ghost mini" id="reloadBtn">Recarregar lista</button>
+      </div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    let password = "";
+
+    const $ = (id) => document.getElementById(id);
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        ...opts,
+        headers: {
+          "Content-Type": "application/json",
+          "x-app-password": password,
+          ...(opts.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || `Erro ${res.status}`);
+      return data;
+    }
+
+    async function login() {
+      password = $("pwd").value;
+      $("loginErr").classList.add("hidden");
+      $("loginBtn").disabled = true;
+      try {
+        await loadList();
+        $("loginCard").classList.add("hidden");
+        $("appArea").classList.remove("hidden");
+      } catch (err) {
+        $("loginErr").textContent = err.message;
+        $("loginErr").classList.remove("hidden");
+      } finally {
+        $("loginBtn").disabled = false;
+      }
+    }
+
+    async function loadList() {
+      const { items } = await api("/api/interactions");
+      $("count").textContent = `${items.length} interação(ões) na origem`;
+      const list = $("list");
+      list.innerHTML = "";
+      for (const it of items) {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <span class="title">${escapeHtml(it.title)}</span>
+          <span class="row">
+            <span class="status s-idle" data-status>aguardando</span>
+            <button class="mini" data-migrate>Migrar</button>
+          </span>`;
+        const statusEl = el.querySelector("[data-status]");
+        const btn = el.querySelector("[data-migrate]");
+        btn.addEventListener("click", () => migrate(it.id, statusEl, btn));
+        list.appendChild(el);
+      }
+    }
+
+    async function migrate(pageId, statusEl, btn) {
+      btn.disabled = true;
+      setStatus(statusEl, "loading", "migrando…");
+      try {
+        const r = await api("/api/migrate", {
+          method: "POST",
+          body: JSON.stringify({ pageId }),
+        });
+        if (r.status === "migrated") {
+          const extra = r.skippedBlocks ? ` (${r.skippedBlocks} bloco(s) não suportado(s))` : "";
+          setStatus(statusEl, "migrated", `migrado · ${r.blocks} bloco(s)${extra}`);
+          if (r.url) {
+            const a = document.createElement("a");
+            a.href = r.url; a.target = "_blank"; a.textContent = "abrir";
+            a.style.marginLeft = "8px"; a.style.fontSize = ".8rem";
+            statusEl.after(a);
+          }
+        } else if (r.status === "skipped") {
+          setStatus(statusEl, "skipped", "já existe · pulado");
+        } else {
+          setStatus(statusEl, "error", r.message || "erro");
+          btn.disabled = false;
+        }
+      } catch (err) {
+        setStatus(statusEl, "error", err.message);
+        btn.disabled = false;
+      }
+    }
+
+    function setStatus(el, kind, text) {
+      el.className = `status s-${kind}`;
+      el.textContent = text;
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    $("loginBtn").addEventListener("click", login);
+    $("pwd").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+    $("reloadBtn").addEventListener("click", () => loadList().catch((e) => alert(e.message)));
+  </script>
+</body>
+</html>
