@@ -71,12 +71,32 @@ const SUPPORTED_BLOCK_TYPES = new Set([
   "bookmark",
 ]);
 
+// Remove recursivamente chaves com valor null (a API de escrita rejeita null;
+// aceita objeto ou undefined). Limpa icon:null, caption:null, etc.
+function stripNulls(value) {
+  if (Array.isArray(value)) {
+    return value.map(stripNulls);
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (v === null) continue; // descarta a chave inteira
+      out[k] = stripNulls(v);
+    }
+    return out;
+  }
+  return value;
+}
+
 function sanitizeBlock(block) {
   const type = block.type;
   if (!SUPPORTED_BLOCK_TYPES.has(type)) return null;
 
-  const payload = block[type] ? structuredClone(block[type]) : {};
+  let payload = block[type] ? structuredClone(block[type]) : {};
   delete payload.children;
+
+  // Limpa quaisquer campos null que a API de escrita não aceita
+  payload = stripNulls(payload);
 
   if (block.__children?.length) {
     const childBlocks = block.__children.map(sanitizeBlock).filter(Boolean);
@@ -84,16 +104,6 @@ function sanitizeBlock(block) {
   }
 
   return { object: "block", type, [type]: payload };
-}
-
-async function appendBlocks(client, pageId, blocks) {
-  const CHUNK = 90;
-  for (let i = 0; i < blocks.length; i += CHUNK) {
-    await client.blocks.children.append({
-      block_id: pageId,
-      children: blocks.slice(i, i + CHUNK),
-    });
-  }
 }
 
 export async function listSourceInteractions() {
