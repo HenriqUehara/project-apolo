@@ -90,12 +90,21 @@ function stripNulls(value) {
   return value;
 }
 
+// Campos que a API de leitura devolve dentro do conteúdo de um bloco,
+// mas que a API de escrita rejeita ("should be not present").
+const READ_ONLY_FIELDS = new Set([
+  "list_format",
+]);
+
 function sanitizeBlock(block) {
   const type = block.type;
   if (!SUPPORTED_BLOCK_TYPES.has(type)) return null;
 
   let payload = block[type] ? structuredClone(block[type]) : {};
   delete payload.children;
+
+  // Remove campos somente-leitura que a API de escrita não aceita
+  for (const field of READ_ONLY_FIELDS) delete payload[field];
 
   payload = stripNulls(payload);
 
