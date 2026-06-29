@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="114" fill="#14110c"></rect><g stroke="#f2ede3" stroke-width="15" stroke-linecap="round">
+<line x1="256" y1="92" x2="256" y2="138"></line><line x1="256" y1="374" x2="256" y2="420"></line>
+<line x1="92" y1="256" x2="138" y2="256"></line><line x1="374" y1="256" x2="420" y2="256"></line>
+<line x1="140.2" y1="140.2" x2="172.7" y2="172.7"></line><line x1="339.3" y1="339.3" x2="371.8" y2="371.8"></line>
+<line x1="371.8" y1="140.2" x2="339.3" y2="172.7"></line><line x1="172.7" y1="339.3" x2="140.2" y2="371.8"></line>
+<line x1="186" y1="105" x2="204" y2="148"></line><line x1="308" y1="364" x2="326" y2="407"></line>
+<line x1="105" y1="326" x2="148" y2="308"></line><line x1="364" y1="204" x2="407" y2="186"></line>
+<line x1="326" y1="105" x2="308" y2="148"></line><line x1="186" y1="407" x2="204" y2="364"></line>
+<line x1="105" y1="186" x2="148" y2="204"></line><line x1="364" y1="308" x2="407" y2="326"></line></g><circle cx="256" cy="256" r="74" fill="none" stroke="#f2ede3" stroke-width="15"></circle></svg>
